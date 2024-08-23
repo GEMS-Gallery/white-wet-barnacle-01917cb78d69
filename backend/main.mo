@@ -31,7 +31,7 @@ actor TexasHoldem {
     currentPlayer : Nat;
     pot : Nat;
     deck : [Card];
-    stage : Text; // "preflop", "flop", "turn", "river", "showdown"
+    stage : Text; // "waiting", "preflop", "flop", "turn", "river", "showdown"
   };
 
   // Stable variables
@@ -80,6 +80,7 @@ actor TexasHoldem {
     { game with
       playerStates = updatedPlayerStates;
       deck = updatedDeck;
+      stage = "preflop";
     }
   };
 
@@ -98,12 +99,11 @@ actor TexasHoldem {
       currentPlayer = 0;
       pot = 0;
       deck = shuffleDeck(createDeck());
-      stage = "preflop";
+      stage = "waiting";
     };
-    let gameWithCards = dealToPlayers(newGame);
-    games := Array.append(games, [(newGameId, gameWithCards)]);
+    games := Array.append(games, [(newGameId, newGame)]);
     gameId := newGameId;
-    currentGame := ?gameWithCards;
+    currentGame := ?newGame;
     #ok(newGameId)
   };
 
@@ -132,11 +132,15 @@ actor TexasHoldem {
           deck = game.deck;
           stage = game.stage;
         };
-        let gameWithCards = dealToPlayers(updatedGame);
+        let finalGame = if (updatedGame.players.size() >= 2) {
+          dealToPlayers(updatedGame)
+        } else {
+          updatedGame
+        };
         games := Array.map<(Nat, GameState), (Nat, GameState)>(games, func((gameId, gameState)) {
-          if (gameId == id) { (gameId, gameWithCards) } else { (gameId, gameState) }
+          if (gameId == id) { (gameId, finalGame) } else { (gameId, gameState) }
         });
-        currentGame := ?gameWithCards;
+        currentGame := ?finalGame;
         #ok()
       };
       case null {
@@ -228,10 +232,29 @@ actor TexasHoldem {
     }
   };
 
-  public query func getGameState() : async Result.Result<GameState, Text> {
+  public query(msg) func getGameState() : async Result.Result<GameState, Text> {
     switch (currentGame) {
       case (?game) {
-        #ok(game)
+        let playerState = Array.find(game.playerStates, func((id, _) : (PlayerId, PlayerState)) : Bool { id == msg.caller });
+        switch (playerState) {
+          case (?(_, state)) {
+            let filteredPlayerStates = Array.map<(PlayerId, PlayerState), (PlayerId, PlayerState)>(game.playerStates, func((id, pState)) {
+              if (id == msg.caller) {
+                (id, pState)
+              } else {
+                (id, { pState with hand = [] }) // Hide other players' cards
+              }
+            });
+            let filteredGame = {
+              game with
+              playerStates = filteredPlayerStates;
+            };
+            #ok(filteredGame)
+          };
+          case null {
+            #err("Player not found in game")
+          };
+        }
       };
       case null {
         #err("No active game")

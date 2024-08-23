@@ -22,6 +22,13 @@ function App() {
     initAuth();
   }, []);
 
+  useEffect(() => {
+    if (gameId) {
+      const interval = setInterval(fetchGameState, 5000); // Fetch game state every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [gameId]);
+
   const login = async () => {
     if (authClient) {
       await authClient.login({

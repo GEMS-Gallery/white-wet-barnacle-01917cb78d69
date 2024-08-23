@@ -59,11 +59,12 @@ const PokerTable: React.FC<PokerTableProps> = ({ gameState }) => {
     <TableContainer>
       {gameState.players.map((player: any, index: number) => {
         const playerState = gameState.playerStates.find((ps: any) => ps[0] === player);
+        const isCurrentPlayer = index === 0; // Assuming the first player in the array is always the current player
         return (
           <PlayerPosition key={index} style={playerPositions[index]}>
-            <Typography variant="body2">{`Player ${index + 1}`}</Typography>
+            <Typography variant="body2">{isCurrentPlayer ? 'You' : `Player ${index + 1}`}</Typography>
             <Typography variant="caption">{`Chips: ${playerState ? playerState[1].chips : 'N/A'}`}</Typography>
-            {playerState && playerState[1].hand.map((card: any, cardIndex: number) => (
+            {isCurrentPlayer && playerState && playerState[1].hand.map((card: any, cardIndex: number) => (
               <Card key={cardIndex}>
                 <Typography>{`${card.value}${card.suit[0]}`}</Typography>
               </Card>
@@ -80,6 +81,9 @@ const PokerTable: React.FC<PokerTableProps> = ({ gameState }) => {
       </CommunityCards>
       <Box position="absolute" bottom={16} left={16}>
         <Typography variant="h6" color="secondary">{`Pot: ${gameState.pot}`}</Typography>
+      </Box>
+      <Box position="absolute" top={16} left={16}>
+        <Typography variant="h6" color="secondary">{`Stage: ${gameState.stage}`}</Typography>
       </Box>
     </TableContainer>
   );
