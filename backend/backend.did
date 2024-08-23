@@ -1,0 +1,50 @@
+type Result_2 = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: GameState;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+type PlayerState = 
+ record {
+   bet: nat;
+   chips: nat;
+   folded: bool;
+   hand: opt Hand;
+ };
+type PlayerId = principal;
+type Hand = vec Card;
+type GameState = 
+ record {
+   communityCards: CommunityCards;
+   currentPlayer: nat;
+   deck: vec Card;
+   playerStates: vec record {
+                       PlayerId;
+                       PlayerState;
+                     };
+   players: vec PlayerId;
+   pot: nat;
+   stage: text;
+ };
+type CommunityCards = vec Card;
+type Card = 
+ record {
+   suit: text;
+   value: nat;
+ };
+service : {
+  createGame: () -> (Result_2);
+  fold: () -> (Result);
+  getGameState: () -> (Result_1) query;
+  joinGame: (nat) -> (Result);
+  placeBet: (nat) -> (Result);
+}
