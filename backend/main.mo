@@ -41,6 +41,9 @@ actor TexasHoldem {
   // Mutable variables
   var currentGame : ?GameState = null;
 
+  // Constants
+  let INITIAL_CHIPS : Nat = 1000;
+
   // Helper functions
   func createDeck() : [Card] {
     let suits = ["hearts", "diamonds", "clubs", "spades"];
@@ -90,7 +93,7 @@ actor TexasHoldem {
     let newGame : GameState = {
       players = [msg.caller];
       playerStates = [(msg.caller, {
-        chips = 1000; // Starting chips
+        chips = INITIAL_CHIPS;
         hand = [];
         bet = 0;
         folded = false;
@@ -118,7 +121,7 @@ actor TexasHoldem {
         };
         let updatedPlayers = Array.append(game.players, [msg.caller]);
         let updatedPlayerStates = Array.append(game.playerStates, [(msg.caller, {
-          chips = 1000; // Starting chips
+          chips = INITIAL_CHIPS;
           hand = [];
           bet = 0;
           folded = false;
