@@ -20,7 +20,7 @@ actor TexasHoldem {
   type CommunityCards = [Card];
   type PlayerState = {
     chips : Nat;
-    hand : ?Hand;
+    hand : Hand;
     bet : Nat;
     folded : Bool;
   };
@@ -70,6 +70,19 @@ actor TexasHoldem {
     (remainingDeck, dealtCards)
   };
 
+  func dealToPlayers(game : GameState) : GameState {
+    var updatedDeck = game.deck;
+    let updatedPlayerStates = Array.map<(PlayerId, PlayerState), (PlayerId, PlayerState)>(game.playerStates, func((id, state)) {
+      let (newDeck, hand) = dealCards(updatedDeck, 2);
+      updatedDeck := newDeck;
+      (id, { state with hand = hand })
+    });
+    { game with
+      playerStates = updatedPlayerStates;
+      deck = updatedDeck;
+    }
+  };
+
   // Game logic functions
   public shared(msg) func createGame() : async Result.Result<Nat, Text> {
     let newGameId = gameId + 1;
@@ -77,7 +90,7 @@ actor TexasHoldem {
       players = [msg.caller];
       playerStates = [(msg.caller, {
         chips = 1000; // Starting chips
-        hand = null;
+        hand = [];
         bet = 0;
         folded = false;
       })];
@@ -87,9 +100,10 @@ actor TexasHoldem {
       deck = shuffleDeck(createDeck());
       stage = "preflop";
     };
-    games := Array.append(games, [(newGameId, newGame)]);
+    let gameWithCards = dealToPlayers(newGame);
+    games := Array.append(games, [(newGameId, gameWithCards)]);
     gameId := newGameId;
-    currentGame := ?newGame;
+    currentGame := ?gameWithCards;
     #ok(newGameId)
   };
 
@@ -105,7 +119,7 @@ actor TexasHoldem {
         let updatedPlayers = Array.append(game.players, [msg.caller]);
         let updatedPlayerStates = Array.append(game.playerStates, [(msg.caller, {
           chips = 1000; // Starting chips
-          hand = null;
+          hand = [];
           bet = 0;
           folded = false;
         })]);
@@ -118,10 +132,11 @@ actor TexasHoldem {
           deck = game.deck;
           stage = game.stage;
         };
+        let gameWithCards = dealToPlayers(updatedGame);
         games := Array.map<(Nat, GameState), (Nat, GameState)>(games, func((gameId, gameState)) {
-          if (gameId == id) { (gameId, updatedGame) } else { (gameId, gameState) }
+          if (gameId == id) { (gameId, gameWithCards) } else { (gameId, gameState) }
         });
-        currentGame := ?updatedGame;
+        currentGame := ?gameWithCards;
         #ok()
       };
       case null {

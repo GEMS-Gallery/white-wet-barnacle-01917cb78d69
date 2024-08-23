@@ -63,6 +63,11 @@ const PokerTable: React.FC<PokerTableProps> = ({ gameState }) => {
           <PlayerPosition key={index} style={playerPositions[index]}>
             <Typography variant="body2">{`Player ${index + 1}`}</Typography>
             <Typography variant="caption">{`Chips: ${playerState ? playerState[1].chips : 'N/A'}`}</Typography>
+            {playerState && playerState[1].hand.map((card: any, cardIndex: number) => (
+              <Card key={cardIndex}>
+                <Typography>{`${card.value}${card.suit[0]}`}</Typography>
+              </Card>
+            ))}
           </PlayerPosition>
         );
       })}

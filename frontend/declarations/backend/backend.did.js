@@ -6,7 +6,7 @@ export const idlFactory = ({ IDL }) => {
   const Hand = IDL.Vec(Card);
   const PlayerState = IDL.Record({
     'bet' : IDL.Nat,
-    'hand' : IDL.Opt(Hand),
+    'hand' : Hand,
     'chips' : IDL.Nat,
     'folded' : IDL.Bool,
   });

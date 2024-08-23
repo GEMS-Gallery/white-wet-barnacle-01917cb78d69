@@ -17,7 +17,7 @@ export type Hand = Array<Card>;
 export type PlayerId = Principal;
 export interface PlayerState {
   'bet' : bigint,
-  'hand' : [] | [Hand],
+  'hand' : Hand,
   'chips' : bigint,
   'folded' : boolean,
 }
